@@ -33,7 +33,6 @@ import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
-import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration;
 import org.springframework.boot.context.properties.ConfigurationPropertiesBindingPostProcessor;
 import org.springframework.cloud.function.context.FunctionCatalog;
 import org.springframework.cloud.function.context.FunctionProperties;
@@ -121,14 +120,14 @@ public class ContextFunctionCatalogInitializer implements ApplicationContextInit
 			if (this.context.getBeanFactory().getBeanNamesForType(PropertySourcesPlaceholderConfigurer.class, false,
 					false).length == 0) {
 				this.context.registerBean(PropertySourcesPlaceholderConfigurer.class,
-						() -> PropertyPlaceholderAutoConfiguration.propertySourcesPlaceholderConfigurer());
+					PropertySourcesPlaceholderConfigurer::new);
 			}
 
 			if (!this.context.getBeanFactory()
 					.containsBeanDefinition(AnnotationConfigUtils.CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME)) {
 				// Switch off the ConfigurationClassPostProcessor
 				this.context.registerBean(AnnotationConfigUtils.CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME,
-						DummyProcessor.class, () -> new DummyProcessor());
+						DummyProcessor.class, DummyProcessor::new);
 				// But switch on other annotation processing
 				AnnotationConfigUtils.registerAnnotationConfigProcessors(this.context);
 			}
@@ -138,7 +137,7 @@ public class ContextFunctionCatalogInitializer implements ApplicationContextInit
 
 			if (ClassUtils.isPresent("com.google.gson.Gson", null) && "gson".equals(preferredMapper)) {
 				if (this.context.getBeanFactory().getBeanNamesForType(Gson.class, false, false).length == 0) {
-					this.context.registerBean(Gson.class, () -> new Gson());
+					this.context.registerBean(Gson.class, Gson::new);
 				}
 				this.context.registerBean(JsonMapper.class, () -> new ContextFunctionCatalogAutoConfiguration.JsonMapperConfiguration().jsonMapper(this.context));
 			}
@@ -184,7 +183,7 @@ public class ContextFunctionCatalogInitializer implements ApplicationContextInit
 					ConversionService conversionService = new DefaultConversionService();
 					return new SimpleFunctionRegistry(conversionService, messageConverter, this.context.getBean(JsonMapper.class));
 				});
-				this.context.registerBean(FunctionProperties.class, () -> new FunctionProperties());
+				this.context.registerBean(FunctionProperties.class, FunctionProperties::new);
 				this.context.registerBean(FunctionRegistrationPostProcessor.class,
 						() -> new FunctionRegistrationPostProcessor(this.context.getAutowireCapableBeanFactory()
 								.getBeanProvider(FunctionRegistration.class)));
@@ -200,7 +199,7 @@ public class ContextFunctionCatalogInitializer implements ApplicationContextInit
 
 					@Override
 					public void run() {
-						runSafely(() -> new DefaultFormattingConversionService());
+						runSafely(DefaultFormattingConversionService::new);
 					}
 
 					public void runSafely(Runnable runnable) {
